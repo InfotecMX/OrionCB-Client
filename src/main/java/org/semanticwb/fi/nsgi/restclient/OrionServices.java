@@ -53,7 +53,7 @@ public class OrionServices {
      * @param entities entities to create
      * @return Future of a JsonObject of the response from the server
      */
-    public final static Future<JsonObject> registerContextAsync(final ContextElement... entities) {
+    public static Future<JsonObject> registerContextAsync(final ContextElement... entities) {
         if (entities.length > 0) {
             JsonObjectBuilder builder = Json.createObjectBuilder();
             JsonArrayBuilder array = Json.createArrayBuilder();
@@ -76,7 +76,7 @@ public class OrionServices {
      * @param entities entities to create
      * @return JsonObject of the response from the server
      */
-    public final static JsonObject registerContext(final ContextElement... entities) {
+    public static JsonObject registerContext(final ContextElement... entities) {
         if (entities.length > 0) {
             try {
                 Future<JsonObject> future = registerContextAsync(entities);
@@ -98,7 +98,7 @@ public class OrionServices {
      * @param query format of the query to apply
      * @return a Future of a JsonObject with the result of the query
      */
-    public final static Future<JsonObject> queryContextAsync(final ContextQuery query) {
+    public static Future<JsonObject> queryContextAsync(final ContextQuery query) {
         RestTask task = new RestTask(endpoint + "/v1/queryContext",
                 query.toJsonObject().toString(), "POST");
         return executor.submit(task);
@@ -111,7 +111,7 @@ public class OrionServices {
      * @param query format of the query to apply
      * @return a JsonObject with the result of the query
      */
-    public final static JsonObject queryContext(final ContextQuery query) {
+    public static JsonObject queryContext(final ContextQuery query) {
         try {
             Future<JsonObject> future = queryContextAsync(query);
             if (null != future)
@@ -130,7 +130,7 @@ public class OrionServices {
      * @param entities entities to update
      * @return Future of JsonObject of the response from the server
      */
-    public final static Future<JsonObject> updateContextAsync(final ContextElement... entities) {
+    public static Future<JsonObject> updateContextAsync(final ContextElement... entities) {
         if (entities.length > 0) {
             JsonObjectBuilder builder = Json.createObjectBuilder();
             JsonArrayBuilder array = Json.createArrayBuilder();
@@ -153,7 +153,7 @@ public class OrionServices {
      * @param entities entities to update
      * @return JsonObject of the response from the server
      */
-    public final static JsonObject updateContext(final ContextElement... entities) {
+    public static JsonObject updateContext(final ContextElement... entities) {
         if (entities.length > 0) {
             try {
                 Future<JsonObject> future = updateContextAsync(entities);
@@ -175,7 +175,7 @@ public class OrionServices {
      * @param notification Notification query
      * @return Future of a Json with the response from the server
      */
-    public final static Future<JsonObject> subscribeToAsync(final Notification notification) {
+    public static Future<JsonObject> subscribeToAsync(final Notification notification) {
         RestTask task = new RestTask(endpoint + "/v1/subscribeContext",
                 notification.toJsonObject().toString(), "POST");
         return executor.submit(task);
@@ -188,7 +188,7 @@ public class OrionServices {
      * @param notification Notification query
      * @return Json with the response from the server
      */
-    public final static JsonObject subscribeTo(final Notification notification) {
+    public static JsonObject subscribeTo(final Notification notification) {
         try {
             Future<JsonObject> future = subscribeToAsync(notification);
             if (null != future)
@@ -207,7 +207,7 @@ public class OrionServices {
      * @param subscriptionId Subscription ID to change
      * @return Futurte of a JsonObject with the response from the server
      */
-    public final static Future<JsonObject> unsubscribeToAsync(final String subscriptionId) {
+    public static Future<JsonObject> unsubscribeToAsync(final String subscriptionId) {
         RestTask task = new RestTask(endpoint + "/v1/unsubscribeContext",
                 "{\"subscriptionId\": \"" + subscriptionId + "\"}", "POST");
         return executor.submit(task);
@@ -220,7 +220,7 @@ public class OrionServices {
      * @param subscriptionId Subscription ID to change
      * @return JsonObject with the response from the server
      */
-    public final static JsonObject unsubscribeTo(final String subscriptionId) {
+    public static JsonObject unsubscribeTo(final String subscriptionId) {
         try {
             Future<JsonObject> future = unsubscribeToAsync(subscriptionId);
             if (null != future)
@@ -241,7 +241,7 @@ public class OrionServices {
      * @param notifications Notification queries
      * @return Future of a Json with the response from the server
      */
-    public final static Future<JsonObject> updateSubscriptionAsync(final String subscriptionId, final NotificationCondition... notifications){
+    public static Future<JsonObject> updateSubscriptionAsync(final String subscriptionId, final NotificationCondition... notifications){
         if (notifications.length>0) {
             JsonObjectBuilder builder = Json.createObjectBuilder();
             JsonArrayBuilder array = Json.createArrayBuilder();
@@ -264,7 +264,7 @@ public class OrionServices {
      * @param notifications Notification queries
      * @return Json with the response from the server
      */
-    public final static JsonObject updateSubscription(final String subscriptionId, final NotificationCondition... notifications) {
+    public static JsonObject updateSubscription(final String subscriptionId, final NotificationCondition... notifications) {
         if (notifications.length > 0) {
             try {
                 Future<JsonObject> future = updateSubscriptionAsync(subscriptionId, notifications);
@@ -277,5 +277,73 @@ public class OrionServices {
             }
         }
         return null;
+    }
+
+    public static Future<JsonObject> getAllEntitiesAsync(){
+        RestTask task = new RestTask(endpoint + "/v1/contextEntities", null, "GET");
+        return executor.submit(task);
+    }
+
+    public static JsonObject getAllEntities(){
+        try {
+            Future<JsonObject> future = getAllEntitiesAsync();
+            if (null != future)
+                return future.get();
+            else
+                return null;
+        } catch (InterruptedException | ExecutionException iex) {
+            throw new RuntimeException("getAllEntities from "+endpoint, iex);
+        }
+    }
+
+    public static Future<JsonObject> getEntityAsync(final String entityId){
+        RestTask task = new RestTask(endpoint + "/v1/contextEntities/"+entityId, null, "GET");
+        return executor.submit(task);
+    }
+
+    public static JsonObject getEntity(final String entityId){
+        try {
+            Future<JsonObject> future = getEntityAsync(entityId);
+            if (null != future)
+                return future.get();
+            else
+                return null;
+        } catch (InterruptedException | ExecutionException iex) {
+            throw new RuntimeException("getAllEntities from "+endpoint, iex);
+        }
+    }
+
+    public static Future<JsonObject> getAttributeFromTypeAsync(final String entityType, final String attribute){
+        RestTask task = new RestTask(endpoint + "/v1/contextEntityTypes/"+entityType+"/attributes/"+attribute, null, "GET");
+        return executor.submit(task);
+    }
+
+    public static JsonObject getAttributeFromType(final String entityType, final String attribute){
+        try {
+            Future<JsonObject> future = getAttributeFromTypeAsync(entityType, attribute);
+            if (null != future)
+                return future.get();
+            else
+                return null;
+        } catch (InterruptedException | ExecutionException iex) {
+            throw new RuntimeException("getAllEntities from "+endpoint, iex);
+        }
+    }
+
+    public static Future<JsonObject> getTypeAsync(final String entityType){
+        RestTask task = new RestTask(endpoint + "/v1/contextEntityTypes/"+entityType, null, "GET");
+        return executor.submit(task);
+    }
+
+    public static JsonObject getType(final String entityType){
+        try {
+            Future<JsonObject> future = getTypeAsync(entityType);
+            if (null != future)
+                return future.get();
+            else
+                return null;
+        } catch (InterruptedException | ExecutionException iex) {
+            throw new RuntimeException("getAllEntities from "+endpoint, iex);
+        }
     }
 }

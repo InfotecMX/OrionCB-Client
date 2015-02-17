@@ -44,6 +44,7 @@ public class RestTask implements Callable<JsonObject> {
             connection.setDoInput(true);
             connection.setRequestProperty("Content-Type", "application/json");
             connection.setRequestProperty("Accept", "application/json");
+            //System.out.println("url: "+url);
             if (null != data) {
                 connection.setDoOutput(true);
                 DataOutputStream out = new DataOutputStream(connection.getOutputStream());

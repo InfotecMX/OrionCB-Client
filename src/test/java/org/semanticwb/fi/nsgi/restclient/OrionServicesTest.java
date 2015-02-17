@@ -6,6 +6,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.semanticwb.fi.nsgi.restclient.elements.*;
 
+import javax.json.JsonArray;
 import javax.json.JsonObject;
 import java.util.ArrayList;
 import java.util.List;
@@ -79,6 +80,48 @@ public class OrionServicesTest {
     private static String UNSUBSCRIBE_BODY = "{\"subscriptionId\": \"54dd428d989ddbe7c867cd57\"}";
     private static String UNSUBSCRIBE_RESPONSE = "{\"subscriptionId\":\"54dd428d989ddbe7c867cd57\"," +
             "\"statusCode\":{\"code\":\"200\",\"reasonPhrase\":\"OK\"}}";
+    private static String ALL_ENTITIES_RESPONSE = "{\"contextResponses\":[{\"contextElement\":" +
+            "{\"type\":\"Room\",\"isPattern\":\"false\",\"id\":\"Room1\",\"attributes\":" +
+            "[{\"name\":\"temperature\",\"type\":\"float\",\"value\":\"23\"}," +
+            "{\"name\":\"pressure\",\"type\":\"integer\",\"value\":\"720\"}]}," +
+            "\"statusCode\":{\"code\":\"200\",\"reasonPhrase\":\"OK\"}},{\"contextElement\":" +
+            "{\"type\":\"Room\",\"isPattern\":\"false\",\"id\":\"Room2\",\"attributes\":" +
+            "[{\"name\":\"temperature\",\"type\":\"float\",\"value\":\"21\"}," +
+            "{\"name\":\"pressure\",\"type\":\"integer\",\"value\":\"711\"}]}," +
+            "\"statusCode\":{\"code\":\"200\",\"reasonPhrase\":\"OK\"}},{\"contextElement\":" +
+            "{\"type\":\"Room\",\"isPattern\":\"false\",\"id\":\"Room3\",\"attributes\":" +
+            "[{\"name\":\"temperature\",\"type\":\"float\",\"value\":\"15\"}," +
+            "{\"name\":\"pressure\",\"type\":\"integer\",\"value\":\"560\"}]}," +
+            "\"statusCode\":{\"code\":\"200\",\"reasonPhrase\":\"OK\"}},{\"contextElement\":" +
+            "{\"type\":\"Car\",\"isPattern\":\"false\",\"id\":\"Audi01\",\"attributes\":" +
+            "[{\"name\":\"FuelTank\",\"type\":\"float\",\"value\":\"98.0\"}," +
+            "{\"name\":\"EngineTemperature\",\"type\":\"float\",\"value\":\"90.0\"}]}," +
+            "\"statusCode\":{\"code\":\"200\",\"reasonPhrase\":\"OK\"}},{\"contextElement\":" +
+            "{\"type\":\"Car\",\"isPattern\":\"false\",\"id\":\"Audi02\",\"attributes\":" +
+            "[{\"name\":\"FuelTank\",\"type\":\"float\",\"value\":\"20.0\"}," +
+            "{\"name\":\"EngineTemperature\",\"type\":\"float\",\"value\":\"70.0\"}]}," +
+            "\"statusCode\":{\"code\":\"200\",\"reasonPhrase\":\"OK\"}}]}";
+    private static String ENTITY_RESPONSE = "{\"contextElement\":{\"type\":\"Car\"," +
+            "\"isPattern\":\"false\",\"id\":\"Audi02\",\"attributes\":" +
+            "[{\"name\":\"FuelTank\",\"type\":\"float\",\"value\":\"20.0\"}," +
+            "{\"name\":\"EngineTemperature\",\"type\":\"float\",\"value\":\"70.0\"}]}," +
+            "\"statusCode\":{\"code\":\"200\",\"reasonPhrase\":\"OK\"}}";
+    private static String TYPE_RESPONSE="{\"contextResponses\":[{\"contextElement\":" +
+            "{\"type\":\"Car\",\"isPattern\":\"false\",\"id\":\"Audi01\",\"attributes\":" +
+            "[{\"name\":\"FuelTank\",\"type\":\"float\",\"value\":\"98.0\"}," +
+            "{\"name\":\"EngineTemperature\",\"type\":\"float\",\"value\":\"90.0\"}]}," +
+            "\"statusCode\":{\"code\":\"200\",\"reasonPhrase\":\"OK\"}},{\"contextElement\":" +
+            "{\"type\":\"Car\",\"isPattern\":\"false\",\"id\":\"Audi02\",\"attributes\":" +
+            "[{\"name\":\"FuelTank\",\"type\":\"float\",\"value\":\"20.0\"}," +
+            "{\"name\":\"EngineTemperature\",\"type\":\"float\",\"value\":\"70.0\"}]}," +
+            "\"statusCode\":{\"code\":\"200\",\"reasonPhrase\":\"OK\"}}]}";
+    private static String TYPE_ATT_RESPONSE = "{\"contextResponses\":[{\"contextElement\":" +
+            "{\"type\":\"Car\",\"isPattern\":\"false\",\"id\":\"Audi01\",\"attributes\":" +
+            "[{\"name\":\"EngineTemperature\",\"type\":\"float\",\"value\":\"90.0\"}]}," +
+            "\"statusCode\":{\"code\":\"200\",\"reasonPhrase\":\"OK\"}},{\"contextElement\":" +
+            "{\"type\":\"Car\",\"isPattern\":\"false\",\"id\":\"Audi02\",\"attributes\":" +
+            "[{\"name\":\"EngineTemperature\",\"type\":\"float\",\"value\":\"70.0\"}]}," +
+            "\"statusCode\":{\"code\":\"200\",\"reasonPhrase\":\"OK\"}}]}";
 
     @Rule
     public ClientDriverRule driver = new ClientDriverRule(1026);
@@ -196,6 +239,29 @@ public class OrionServicesTest {
         subId = response.getString("subscriptionId");
         assertEquals("54dd428d989ddbe7c867cd57", subId);
         assertEquals("200", response.getJsonObject("statusCode").getString("code"));
+    }
+
+    @Test
+    public void testToService(){
+        driver.addExpectation(onRequestTo("/v1/contextEntities").withMethod(ClientDriverRequest.Method.GET),
+                giveResponse(ALL_ENTITIES_RESPONSE, "application/json").withStatus(200));
+        driver.addExpectation(onRequestTo("/v1/contextEntities/Audi02").withMethod(ClientDriverRequest.Method.GET),
+                giveResponse(ENTITY_RESPONSE, "application/json").withStatus(200));
+        driver.addExpectation(onRequestTo("/v1/contextEntityTypes/Car").withMethod(ClientDriverRequest.Method.GET),
+                giveResponse(TYPE_RESPONSE, "application/json").withStatus(200));
+        driver.addExpectation(onRequestTo("/v1/contextEntityTypes/Car/attributes/EngineTemperature").withMethod(ClientDriverRequest.Method.GET),
+                giveResponse(TYPE_ATT_RESPONSE, "application/json").withStatus(200));
+        JsonObject jsonObject = OrionServices.getAllEntities();
+        JsonArray array = jsonObject.getJsonArray("contextResponses");
+        assertNotNull(array);
+        assertEquals(5, array.size());
+        jsonObject = OrionServices.getEntity("Audi02").getJsonObject("contextElement");
+        assertEquals("Car", jsonObject.getString("type"));
+        jsonObject = OrionServices.getAttributeFromType("Car", "EngineTemperature").getJsonArray("contextResponses").getJsonObject(1);
+        assertEquals("Audi02",jsonObject.getJsonObject("contextElement").getString("id"));
+        jsonObject = OrionServices.getType("Car");
+        array = jsonObject.getJsonArray("contextResponses");
+        assertEquals("Audi01", array.getJsonObject(0).getJsonObject("contextElement").getString("id"));
     }
 
 }
