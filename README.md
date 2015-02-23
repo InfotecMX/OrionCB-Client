@@ -1,8 +1,9 @@
-.. image:: https://travis-ci.org/InfotecMX/OrionCB-Client.svg?branch=master
-   :target: https://travis-ci.org/InfotecMX/OrionCB-Client
-   :alt: Build Status
+[![Build Status](https://travis-ci.org/InfotecMX/OrionCB-Client.svg?branch=master)](https://travis-ci.org/InfotecMX/OrionCB-Client)
 
-# OrionCB-Client
+
+OrionCB-Client
+==============
+
 Java Client for Orion ContextBroker Test API
 
 ### Instalación
