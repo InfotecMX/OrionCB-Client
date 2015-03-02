@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class NotificationEndPointTest {
     private static String DATA="{\n" +
@@ -43,6 +45,18 @@ public class NotificationEndPointTest {
             "  ]\n" +
             "}";
 
+    private static String name = null;
+    static {
+        Path path= Paths.get(NotificationEndPointTest.class.getResource(".").getPath());
+        for (int i =0; i<path.getNameCount(); i++){
+            if (path.getName(i).toString().equals("target")){
+                name = path.getName(i-1).toString();
+                break;
+            }
+        }
+    }
+            //.getParent().getParent().getFileName().toString();
+
     @EJB
     private NotificationEndPoint endpoint;
 
@@ -51,17 +65,18 @@ public class NotificationEndPointTest {
         EJBContainer.createEJBContainer(EndPoint.getOpts()).getContext().bind("inject", this);
         Assert.assertNotNull(endpoint);
         final String expected = "{\"Message\":\"EndPonit to receive JSON Notifications from OrionCB\"}";
-        final String actual = get("http://127.0.0.1:8080/RestClient/api/endpoint");
+        final String actual = get("http://127.0.0.1:8080/"+name+"/api/endpoint");
         Assert.assertEquals(expected, actual);
     }
 
     @Test
     public void testPost() throws Exception {
-        EJBContainer.createEJBContainer(EndPoint.getOpts()).getContext().bind("inject", this);
+        EJBContainer container = EJBContainer.createEJBContainer(EndPoint.getOpts());
+        container.getContext().bind("inject", this);
         Assert.assertNotNull(endpoint);
-
+        System.out.println("->" + name);
         final String expected = "{\"Status\":\"received\"}";
-        final String actual = post("http://127.0.0.1:8080/RestClient/api/endpoint", DATA);
+        final String actual = post("http://127.0.0.1:8080/"+name+"/api/endpoint", DATA);
         Assert.assertEquals(expected, actual);
 
     }
