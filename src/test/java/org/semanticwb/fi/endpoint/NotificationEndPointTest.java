@@ -74,7 +74,6 @@ public class NotificationEndPointTest {
         EJBContainer container = EJBContainer.createEJBContainer(EndPoint.getOpts());
         container.getContext().bind("inject", this);
         Assert.assertNotNull(endpoint);
-        System.out.println("->" + name);
         final String expected = "{\"Status\":\"received\"}";
         final String actual = post("http://127.0.0.1:8080/"+name+"/api/endpoint", DATA);
         Assert.assertEquals(expected, actual);
