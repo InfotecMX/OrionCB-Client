@@ -59,6 +59,7 @@ public class RestTask implements Callable<JsonObject> {
             JsonReader rdr = Json.createReader(connection.getInputStream());
             return rdr.readObject();
         } catch (IOException ioe) {
+            System.out.println("Can't connect to : "+url);
             return null;
         }
     }
