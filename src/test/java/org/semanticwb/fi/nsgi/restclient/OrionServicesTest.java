@@ -14,6 +14,7 @@ import java.util.concurrent.Future;
 
 import static com.github.restdriver.clientdriver.RestClientDriver.giveResponse;
 import static com.github.restdriver.clientdriver.RestClientDriver.onRequestTo;
+import java.util.Optional;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -139,7 +140,8 @@ public class OrionServicesTest {
         list.add(new Attribute("FuelTank", "float", "50.0"));
         list.add(new Attribute("EngineTemperature", "float", "90.0"));
         ContextElement ce = new ContextElement("Car", "Audi01", list);
-        JsonObject response = OrionServices.registerContext(ce);
+        JsonObject response = OrionServices.registerContext(ce).
+                orElseThrow(() -> new RuntimeException("No value returned"));
         assertNotNull(response);
         JsonObject cresp = response.getJsonArray("contextResponses").getJsonObject(0).getJsonObject("statusCode");
         assertEquals("200", cresp.getString("code"));
@@ -148,8 +150,9 @@ public class OrionServicesTest {
         list.add(new Attribute("FuelTank", "float", "20.0"));
         list.add(new Attribute("EngineTemperature", "float", "70.0"));
         ContextElement ce2 = new ContextElement("Car", "Audi02", list);
-        Future<JsonObject> future = OrionServices.registerContextAsync(ce, ce2);
-        response = future.get();
+        Future<Optional<JsonObject>> future = OrionServices.registerContextAsync(ce, ce2);
+        response = future.get().
+                orElseThrow(() -> new RuntimeException("No value returned"));
         assertNotNull(response);
         cresp = response.getJsonArray("contextResponses").getJsonObject(0).getJsonObject("statusCode");
         assertEquals("200", cresp.getString("code"));
@@ -170,14 +173,16 @@ public class OrionServicesTest {
         cq.addEntity(new EntityQuery("Car", true, "Audi*"));
         cq.addAttibute("FuelTank");
         cq.addAttibute("EngineTemperature");
-        Future<JsonObject> future = OrionServices.queryContextAsync(cq);
-        JsonObject resp = future.get();
+        Future<Optional<JsonObject>> future = OrionServices.queryContextAsync(cq);
+        JsonObject resp = future.get().
+                orElseThrow(() -> new RuntimeException("No value returned"));
         assertNotNull(resp);
         resp = resp.getJsonArray("contextResponses").getJsonObject(1).getJsonObject("contextElement");
         assertEquals("Audi02", resp.getString("id"));
         cq = new ContextQuery();
         cq.addEntity(new EntityQuery("Car", false, "Audi01"));
-        resp = OrionServices.queryContext(cq);
+        resp = OrionServices.queryContext(cq).
+                orElseThrow(() -> new RuntimeException("No value returned"));
         assertNotNull(resp);
         resp = resp.getJsonArray("contextResponses").getJsonObject(0).getJsonObject("contextElement")
                 .getJsonArray("attributes").getJsonObject(1);
@@ -197,11 +202,13 @@ public class OrionServicesTest {
         list.add(new Attribute("FuelTank", "float", "50.0"));
         list.add(new Attribute("EngineTemperature", "float", "90.0"));
         ContextElement ce = new ContextElement("Car", "Audi01", list);
-        JsonObject response = OrionServices.registerContext(ce);
+        JsonObject response = OrionServices.registerContext(ce).
+                orElseThrow(() -> new RuntimeException("No value returned"));
         assertNotNull(response);
         ce = new ContextElement("Car", "Audi01");
         ce.add(new Attribute("FuelTank", "float", "98.0"));
-        JsonObject resp = OrionServices.updateContext(ce);
+        JsonObject resp = OrionServices.updateContext(ce).
+                orElseThrow(() -> new RuntimeException("No value returned"));
         assertNotNull(resp);
         resp = resp.getJsonArray("contextResponses").getJsonObject(0).getJsonObject("statusCode");
         assertEquals("200", resp.getString("code"));
@@ -225,17 +232,22 @@ public class OrionServicesTest {
         attributes.add("EngineTemperature");
         Notification not = new Notification(entities, attributes, "http://200.38.191.69:1028/accumulate", "PT1H");
         not.addNotificationCondition(NotificationType.ONTIMEINTERVAL, "PT5M");
-        JsonObject response = OrionServices.subscribeTo(not);
+        JsonObject response = OrionServices.subscribeTo(not).
+                orElseThrow(() -> new RuntimeException("No value returned"));
         assertNotNull(response);
         response = response.getJsonObject("subscribeResponse");
         assertEquals("PT1H", response.getString("duration"));
         String subId = response.getString("subscriptionId");
         assertEquals("54dd428d989ddbe7c867cd57", subId);
-        response = OrionServices.updateSubscription(subId, new NotificationCondition(NotificationType.ONCHANGE, "EngineTemperature"));
+        response = OrionServices.updateSubscription(subId, 
+                new NotificationCondition(NotificationType.ONCHANGE, 
+                        "EngineTemperature")).
+                orElseThrow(() -> new RuntimeException("No value returned"));
         response = response.getJsonObject("subscribeResponse");
         subId = response.getString("subscriptionId");
         assertEquals("54dd428d989ddbe7c867cd57", subId);
-        response = OrionServices.unsubscribeTo(subId);
+        response = OrionServices.unsubscribeTo(subId).
+                orElseThrow(() -> new RuntimeException("No value returned"));
         subId = response.getString("subscriptionId");
         assertEquals("54dd428d989ddbe7c867cd57", subId);
         assertEquals("200", response.getJsonObject("statusCode").getString("code"));
@@ -251,15 +263,21 @@ public class OrionServicesTest {
                 giveResponse(TYPE_RESPONSE, "application/json").withStatus(200));
         driver.addExpectation(onRequestTo("/v1/contextEntityTypes/Car/attributes/EngineTemperature").withMethod(ClientDriverRequest.Method.GET),
                 giveResponse(TYPE_ATT_RESPONSE, "application/json").withStatus(200));
-        JsonObject jsonObject = OrionServices.getAllEntities();
+        JsonObject jsonObject = OrionServices.getAllEntities().
+                orElseThrow(() -> new RuntimeException("No value returned"));
         JsonArray array = jsonObject.getJsonArray("contextResponses");
         assertNotNull(array);
         assertEquals(5, array.size());
-        jsonObject = OrionServices.getEntity("Audi02").getJsonObject("contextElement");
+        jsonObject = OrionServices.getEntity("Audi02").
+                orElseThrow(() -> new RuntimeException("No value returned")).
+                getJsonObject("contextElement");
         assertEquals("Car", jsonObject.getString("type"));
-        jsonObject = OrionServices.getAttributeFromType("Car", "EngineTemperature").getJsonArray("contextResponses").getJsonObject(1);
+        jsonObject = OrionServices.getAttributeFromType("Car", "EngineTemperature").
+                orElseThrow(() -> new RuntimeException("No value returned")).
+                getJsonArray("contextResponses").getJsonObject(1);
         assertEquals("Audi02",jsonObject.getJsonObject("contextElement").getString("id"));
-        jsonObject = OrionServices.getType("Car");
+        jsonObject = OrionServices.getType("Car").
+                orElseThrow(() -> new RuntimeException("No value returned"));
         array = jsonObject.getJsonArray("contextResponses");
         assertEquals("Audi01", array.getJsonObject(0).getJsonObject("contextElement").getString("id"));
     }

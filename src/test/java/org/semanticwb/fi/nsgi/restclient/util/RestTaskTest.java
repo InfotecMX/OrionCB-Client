@@ -9,6 +9,7 @@ import javax.json.JsonObject;
 
 import static com.github.restdriver.clientdriver.RestClientDriver.giveResponse;
 import static com.github.restdriver.clientdriver.RestClientDriver.onRequestTo;
+import java.util.function.Supplier;
 import static org.junit.Assert.*;
 
 public class RestTaskTest {
@@ -90,7 +91,7 @@ public class RestTaskTest {
         RestTask rt = new RestTask("http://localhost:1026/v1/queryContext",QUERY_PATTERN, "POST");
         driver.addExpectation(onRequestTo("/v1/queryContext").withMethod(ClientDriverRequest.Method.POST)
                 .withBody(QUERY_PATTERN, "application/json"), giveResponse(RESPONSE_PATTERN,"application/json").withStatus(200));
-        JsonObject json = rt.call();
+        JsonObject json = rt.call().orElseThrow(() -> new RuntimeException("No value returned"));
         JsonObject jRoom = json.getJsonArray("contextResponses").getJsonObject(1).getJsonObject("contextElement")
                 .getJsonArray("attributes").getJsonObject(0);
         assertEquals("25", jRoom.getString("value"));
@@ -101,7 +102,7 @@ public class RestTaskTest {
         RestTask rt = new RestTask("http://localhost:1026/v1/queryContexts",QUERY_PATTERN, "POST");
         driver.addExpectation(onRequestTo("/v1/queryContexts").withMethod(ClientDriverRequest.Method.POST)
                 .withBody(QUERY_PATTERN, "application/json"), giveResponse(ERROR_BAD_URL,"application/json").withStatus(200));
-        JsonObject json = rt.call();
+        JsonObject json = rt.call().orElseThrow(() -> new RuntimeException("No value returned"));
         JsonObject jCode = json.getJsonObject("orionError");
         assertEquals("400", jCode.getString("code"));
     }
@@ -111,7 +112,7 @@ public class RestTaskTest {
         RestTask rt = new RestTask("http://localhost:1026/version",null, "GET");
         driver.addExpectation(onRequestTo("/version").withMethod(ClientDriverRequest.Method.GET)
                 .withBody("", "application/json"), giveResponse(VERSION,"application/json").withStatus(200));
-        JsonObject json = rt.call();
+        JsonObject json = rt.call().orElseThrow(() -> new RuntimeException("No value returned"));
         assertEquals("6 d, 5 h, 45 m, 50 s", json.getJsonObject("orion").getString("uptime"));
     }
 

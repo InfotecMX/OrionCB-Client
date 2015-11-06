@@ -7,6 +7,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 
 /**
@@ -14,7 +15,7 @@ import java.util.concurrent.Callable;
  * The REST server should be asking for an application/json payload
  * Created by serch on 2/6/15.
  */
-public class RestTask implements Callable<JsonObject> {
+public class RestTask implements Callable<Optional<JsonObject>> {
     private final String url;
     private final String data;
     private final String type;
@@ -36,7 +37,7 @@ public class RestTask implements Callable<JsonObject> {
     /**
      *  Method doing the actual work, to be called by the executing thread or ExecutorService
      */
-    public final JsonObject call() throws Exception {
+    public final Optional<JsonObject> call() throws Exception {
         try {
             URL uri = new URL(url);
             HttpURLConnection connection = (HttpURLConnection) uri.openConnection();
@@ -57,10 +58,10 @@ public class RestTask implements Callable<JsonObject> {
             }
             connection.connect();
             JsonReader rdr = Json.createReader(connection.getInputStream());
-            return rdr.readObject();
+            return Optional.of(rdr.readObject());
         } catch (IOException ioe) {
             System.out.println("Can't connect to : "+url);
-            return null;
+            return Optional.empty();
         }
     }
 }
